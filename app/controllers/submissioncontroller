@@ -1,0 +1,79 @@
+<?php
+session_start();
+require_once __DIR__ . "/../models/Submission.php";
+
+$base    = (isset($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'];
+$folder  = rtrim(dirname(dirname(dirname($_SERVER['SCRIPT_NAME']))), '/');
+$baseUrl = $base . $folder;
+
+function requireAuth($baseUrl) {
+    if (empty($_SESSION['user_id'])) {
+        header("Location: $baseUrl/app/views/login.php");
+        exit();
+    }
+}
+
+function handleImageUpload($file) {
+    if (!isset($file) || $file['error'] !== UPLOAD_ERR_OK) return null;
+    $allowed = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (!in_array($file['type'], $allowed)) return null;
+    $ext      = pathinfo($file['name'], PATHINFO_EXTENSION);
+    $filename = uniqid('sub_', true) . '.' . $ext;
+    $dest     = __DIR__ . "/../../public/images/submissions/" . $filename;
+    if (!is_dir(dirname($dest))) mkdir(dirname($dest), 0755, true);
+    return move_uploaded_file($file['tmp_name'], $dest) ? $filename : null;
+}
+
+$action          = $_POST['action'] ?? '';
+$submissionModel = new Submission();
+
+switch ($action) {
+
+    case 'create':
+        requireAuth($baseUrl);
+        $challenge_id = (int)($_POST['challenge_id'] ?? 0);
+        $description  = htmlspecialchars(trim($_POST['description'] ?? ''));
+        $link         = htmlspecialchars(trim($_POST['link'] ?? ''));
+        $image        = handleImageUpload($_FILES['image'] ?? null);
+
+        if ($challenge_id && $description) {
+            // Vérifier si déjà participé
+            if ($submissionModel->hasParticipated($challenge_id, $_SESSION['user_id'])) {
+                header("Location: $baseUrl/app/views/challenge_detaille.php?id=$challenge_id&error=already");
+                exit();
+            }
+            $submissionModel->create($challenge_id, $_SESSION['user_id'], $description, $image, $link);
+            header("Location: $baseUrl/app/views/challenge_detail.php?id=$challenge_id&success=submitted");
+        } else {
+            header("Location: $baseUrl/app/views/Create_submission.php?challenge_id=$challenge_id&error=missing");
+        }
+        exit();
+
+    case 'edit':
+        requireAuth($baseUrl);
+        $id           = (int)($_POST['id'] ?? 0);
+        $challenge_id = (int)($_POST['challenge_id'] ?? 0);
+        $description  = htmlspecialchars(trim($_POST['description'] ?? ''));
+        $link         = htmlspecialchars(trim($_POST['link'] ?? ''));
+        $image        = handleImageUpload($_FILES['image'] ?? null);
+
+        if ($id && $description) {
+            $submissionModel->update($id, $_SESSION['user_id'], $description, $image, $link);
+            header("Location: $baseUrl/app/views/challenge_detaille.php?id=$challenge_id&success=updated");
+        } else {
+            header("Location: $baseUrl/app/views/edit_submission.php?id=$id&error=missing");
+        }
+        exit();
+
+    case 'delete':
+        requireAuth($baseUrl);
+        $id           = (int)($_POST['id'] ?? 0);
+        $challenge_id = (int)($_POST['challenge_id'] ?? 0);
+        if ($id) $submissionModel->delete($id, $_SESSION['user_id']);
+        header("Location: $baseUrl/app/views/challenge_detaille.php?id=$challenge_id&success=deleted");
+        exit();
+
+    default:
+        header("Location: $baseUrl/app/views/challenge.php");
+        exit();
+}
