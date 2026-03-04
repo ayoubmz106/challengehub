@@ -15,10 +15,6 @@ if (!$challenge) {
     header("Location: challenge.php");
     exit();
 }
-
-$base = (isset($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'];
-$folder = rtrim(dirname(dirname(dirname($_SERVER['SCRIPT_NAME']))), '/');
-$baseUrl = $base . $folder;
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -36,11 +32,11 @@ $baseUrl = $base . $folder;
 
     <?php if (!empty($_GET['error'])): ?>
         <p class="alert error">
-            <?= $_GET['error'] === 'already' ? 'Vous avez déjà participé.' : 'Remplissez la description.' ?>
+            <?= $_GET['error'] === 'already' ? 'Vous avez déjà participé à ce défi.' : 'Remplissez la description.' ?>
         </p>
     <?php endif; ?>
 
-    <form method="POST" action="<?= $baseUrl ?>/app/controllers/submissioncontroller.php" enctype="multipart/form-data">
+    <form method="POST" action="/<?= trim(dirname(dirname(dirname($_SERVER['SCRIPT_NAME']))), '/') ?>/app/controllers/submissioncontroller.php" enctype="multipart/form-data">
         <input type="hidden" name="action" value="create">
         <input type="hidden" name="challenge_id" value="<?= $challenge_id ?>">
 

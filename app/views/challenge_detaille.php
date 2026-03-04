@@ -62,7 +62,7 @@ $alreadyParticipated = !empty($_SESSION['user_id']) && $submissionModel->hasPart
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
         <h2>Participations (<?= count($submissions) ?>)</h2>
         <?php if (!empty($_SESSION['user_id']) && $_SESSION['user_id'] != $c['user_id'] && !$alreadyParticipated): ?>
-            <a href="Create_submission.php?challenge_id=<?= $c['id'] ?>" class="btn btn-primary">+ Participer</a>
+            <a href="create_submission.php?challenge_id=<?= $c['id'] ?>" class="btn btn-primary">+ Participer</a>
         <?php elseif ($alreadyParticipated): ?>
             <span class="badge" style="background:#c6f6d5;color:#276749;">✅ Vous avez participé</span>
         <?php endif; ?>

@@ -43,7 +43,7 @@ switch ($action) {
                 exit();
             }
             $submissionModel->create($challenge_id, $_SESSION['user_id'], $description, $image, $link);
-            header("Location: $baseUrl/app/views/challenge_detail.php?id=$challenge_id&success=submitted");
+            header("Location: $baseUrl/app/views/challenge_detaille.php?id=$challenge_id&success=submitted");
         } else {
             header("Location: $baseUrl/app/views/Create_submission.php?challenge_id=$challenge_id&error=missing");
         }
