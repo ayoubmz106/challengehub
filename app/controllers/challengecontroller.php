@@ -1,10 +1,10 @@
 <?php
 session_start();
+require_once __DIR__ . "/../../config/csrf.php";
 require_once __DIR__ . "/../models/challenge.php";
 
-// Définir le base URL automatiquement
-$base = (isset($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'];
-$folder = rtrim(dirname(dirname(dirname($_SERVER['SCRIPT_NAME']))), '/');
+$base    = (isset($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'];
+$folder  = rtrim(dirname(dirname(dirname($_SERVER['SCRIPT_NAME']))), '/');
 $baseUrl = $base . $folder;
 
 function requireAuth($baseUrl) {
@@ -18,19 +18,20 @@ function handleImageUpload($file) {
     if (!isset($file) || $file['error'] !== UPLOAD_ERR_OK) return null;
     $allowed = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
     if (!in_array($file['type'], $allowed)) return null;
-    $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
+    $ext      = pathinfo($file['name'], PATHINFO_EXTENSION);
     $filename = uniqid('img_', true) . '.' . $ext;
-    $dest = __DIR__ . "/../../public/images/challenges/" . $filename;
+    $dest     = __DIR__ . "/../../public/images/challenges/" . $filename;
     if (!is_dir(dirname($dest))) mkdir(dirname($dest), 0755, true);
     return move_uploaded_file($file['tmp_name'], $dest) ? $filename : null;
 }
 
-$action = $_POST['action'] ?? '';
+$action         = $_POST['action'] ?? '';
 $challengeModel = new Challenge();
 
 switch ($action) {
 
     case 'create':
+        verifyCsrfToken();
         requireAuth($baseUrl);
         $title       = htmlspecialchars(trim($_POST['title'] ?? ''));
         $description = htmlspecialchars(trim($_POST['description'] ?? ''));
@@ -47,6 +48,7 @@ switch ($action) {
         exit();
 
     case 'edit':
+        verifyCsrfToken();
         requireAuth($baseUrl);
         $id          = (int)($_POST['id'] ?? 0);
         $title       = htmlspecialchars(trim($_POST['title'] ?? ''));
@@ -64,6 +66,7 @@ switch ($action) {
         exit();
 
     case 'delete':
+        verifyCsrfToken();
         requireAuth($baseUrl);
         $id = (int)($_POST['id'] ?? 0);
         if ($id) $challengeModel->delete($id, $_SESSION['user_id']);

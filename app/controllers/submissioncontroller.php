@@ -1,5 +1,6 @@
 <?php
 session_start();
+require_once __DIR__ . "/../../config/csrf.php";
 require_once __DIR__ . "/../models/Submission.php";
 
 $base    = (isset($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'];
@@ -30,6 +31,7 @@ $submissionModel = new Submission();
 switch ($action) {
 
     case 'create':
+        verifyCsrfToken();
         requireAuth($baseUrl);
         $challenge_id = (int)($_POST['challenge_id'] ?? 0);
         $description  = htmlspecialchars(trim($_POST['description'] ?? ''));
@@ -37,7 +39,6 @@ switch ($action) {
         $image        = handleImageUpload($_FILES['image'] ?? null);
 
         if ($challenge_id && $description) {
-            // Vérifier si déjà participé
             if ($submissionModel->hasParticipated($challenge_id, $_SESSION['user_id'])) {
                 header("Location: $baseUrl/app/views/challenge_detaille.php?id=$challenge_id&error=already");
                 exit();
@@ -45,11 +46,12 @@ switch ($action) {
             $submissionModel->create($challenge_id, $_SESSION['user_id'], $description, $image, $link);
             header("Location: $baseUrl/app/views/challenge_detaille.php?id=$challenge_id&success=submitted");
         } else {
-            header("Location: $baseUrl/app/views/Create_submission.php?challenge_id=$challenge_id&error=missing");
+            header("Location: $baseUrl/app/views/create_submission.php?challenge_id=$challenge_id&error=missing");
         }
         exit();
 
     case 'edit':
+        verifyCsrfToken();
         requireAuth($baseUrl);
         $id           = (int)($_POST['id'] ?? 0);
         $challenge_id = (int)($_POST['challenge_id'] ?? 0);
@@ -66,6 +68,7 @@ switch ($action) {
         exit();
 
     case 'delete':
+        verifyCsrfToken();
         requireAuth($baseUrl);
         $id           = (int)($_POST['id'] ?? 0);
         $challenge_id = (int)($_POST['challenge_id'] ?? 0);

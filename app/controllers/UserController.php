@@ -1,9 +1,10 @@
 <?php
 session_start();
-require_once __DIR__ . "/../models/User.php";
+require_once __DIR__ . "/../../config/csrf.php";
+require_once __DIR__ . "/../models/user.php";
 
-$base = (isset($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'];
-$folder = rtrim(dirname(dirname(dirname($_SERVER['SCRIPT_NAME']))), '/');
+$base    = (isset($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'];
+$folder  = rtrim(dirname(dirname(dirname($_SERVER['SCRIPT_NAME']))), '/');
 $baseUrl = $base . $folder;
 
 $action = '';
@@ -16,6 +17,7 @@ $userModel = new User();
 switch ($action) {
 
     case 'register':
+        verifyCsrfToken();
         $nom      = htmlspecialchars(trim($_POST['nom'] ?? ''));
         $email    = htmlspecialchars(trim($_POST['email'] ?? ''));
         $password = $_POST['password'] ?? '';
@@ -34,6 +36,7 @@ switch ($action) {
         exit();
 
     case 'login':
+        verifyCsrfToken();
         $email    = trim($_POST['email'] ?? '');
         $password = $_POST['password'] ?? '';
 
